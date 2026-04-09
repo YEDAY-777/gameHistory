@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>双人PK·朝代制度配对游戏 | 历史知识对决</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* 全局紧凑，确保视口内完整展示所有内容 */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a472a 0%, #0e2a1a 100%);
+            font-family: 'Segoe UI', '华文楷书', 'Microsoft YaHei', 'PingFang SC', '黑体', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            min-height: 100vh;
+        }
+
+        /* 游戏主面板 — 紧凑且不超出视口高度 */
+        .game-container {
+            max-width: 1600px;
+            width: 100%;
+            background: rgba(210, 180, 140, 0.25);
+            border-radius: 2.5rem 2.5rem 2rem 2rem;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 200, 0.5);
+            padding: 0.8rem 1.2rem 1rem 1.2rem;
+            transition: all 0.2s;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin: 0 0 0.2rem 0;
+            color: #ffefb9;
+            text-shadow: 4px 4px 0 #5a2e1a;
+            letter-spacing: 2px;
+        }
+
+        .sub {
+            text-align: center;
+            color: #f7e5b1;
+            font-style: italic;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        /* 左右PK布局 — 双栏并排 */
+        .pk-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            justify-content: center;
+        }
+
+        .team-card {
+            flex: 1;
+            min-width: 360px;
+            background: #fef7e0;
+            background-image: radial-gradient(circle at 10% 20%, rgba(245, 222, 179, 0.4) 2%, transparent 2.5%);
+            background-size: 24px 24px;
+            border-radius: 2rem;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3), inset 0 1px 3px rgba(255, 250, 210, 0.8);
+            overflow: hidden;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .team-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .team-header {
+            background: #2c1a10;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            color: #ffeaac;
+            font-weight: bold;
+            border-bottom: 3px solid #dbb879;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .team-name {
+            font-size: 1.6rem;
+            background: #00000055;
+            padding: 0 0.6rem;
+            border-radius: 40px;
+            letter-spacing: 1px;
+        }
+
+        .team-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 1rem;
+            background: #3e2a1f;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+        }
+
+        .team-stats span {
+            font-weight: bold;
+            color: #ffd966;
+        }
+
+        .timer-box, .score-box {
+            background: #1f140c;
+            padding: 0.1rem 0.7rem;
+            border-radius: 2rem;
+        }
+
+        /* 关键改动: 游戏区域采用左右并排 (文字 + 图片) 大幅降低垂直高度 */
+        .game-area {
+            padding: 0.8rem;
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: bold;
+            background: #d9b48b;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            margin-bottom: 0.6rem;
+            color: #2d2418;
+            box-shadow: inset 0 1px 2px #fff3cf, 0 2px 3px rgba(0,0,0,0.1);
+            width: fit-content;
+        }
+
+        /* 文字列表区域 (左) — 紧凑且可滚动但高度适配，实际上由于项数少一般不溢出 */
+        .text-list {
+            flex: 1.2;
+            min-width: 160px;
+            background: #f3e9ce;
+            border-radius: 1.5rem;
+            padding: 0.7rem;
+            box-shadow: inset 0 0 0 2px #fff6e0, 0 4px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: auto;
+            max-height: 100%;
+        }
+
+        .text-item {
+            background: #fff3e0;
+            border-left: 8px solid #b97f44;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #3a2a1e;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            line-height: 1.3;
+        }
+
+        .text-item:before {
+            content: "📜";
+            font-size: 1rem;
+        }
+
+        .text-item.selected {
+            background: #ffda9e;
+            border-left-color: #e63946;
+            transform: scale(1.01);
+            box-shadow: 0 0 0 2px #ffb347;
+        }
+
+        .text-item.matched {
+            display: none;
+        }
+
+        /* 图片网格区域 (右) — 采用2~3列布局，高度降低 */
+        .image-grid {
+            flex: 1.5;
+            min-width: 180px;
+            background: #e6d5b3;
+            border-radius: 1.5rem;
+            padding: 0.7rem;
+            box-shadow: inset 0 0 0 2px #fff1d0, 0 4px 8px rgba(0,0,0,0.05);
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+            align-content: start;
+        }
+
+        .img-card {
+            background: #fffaf0;
+            border-radius: 1.2rem;
+            padding: 8px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 3px 0 #b48b5a;
+            border: 1px solid #efd29e;
+        }
+
+        .img-card.selected {
+            background: #ffe1a0;
+            transform: scale(0.97);
+            box-shadow: 0 1px 0 #b48b5a;
+            border: 2px solid #e67e22;
+        }
+
+        .img-card.matched {
+            display: none;
+        }
+
+        .img-emoji {
+            font-size: 2.2rem;
+            display: block;
+            line-height: 1;
+        }
+
+        .img-label {
+            font-size: 0.7rem;
+            font-weight: bold;
+            background: #e7cfa1;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 30px;
+            margin-top: 6px;
+            color: #4a2a0e;
+        }
+
+        /* 底部控制区紧凑 */
+        .control-bar {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+            gap: 20px;
+        }
+
+        .btn {
+            background: #f3c26b;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 24px;
+            border-radius: 60px;
+            cursor: pointer;
+            color: #2d2b1f;
+            transition: 0.05s linear;
+            box-shadow: 0 4px 0 #9b6a3c;
+            font-family: inherit;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #9b6a3c;
+        }
+
+        .winner-toast {
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #000000dd;
+            backdrop-filter: blur(16px);
+            color: gold;
+            font-size: 1.8rem;
+            font-weight: bold;
+            padding: 0.8rem 1.8rem;
+            border-radius: 60px;
+            z-index: 1000;
+            border: 2px solid #ffd966;
+            white-space: nowrap;
+            pointer-events: none;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        .error-msg {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #d62828e6;
+            color: white;
+            padding: 5px 14px;
+            border-radius: 60px;
+            font-weight: bold;
+            z-index: 999;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        footer {
+            text-align: center;
+            color: #e9dba9;
+            margin-top: 10px;
+            font-size: 0.7rem;
+        }
+
+        /* 响应式：窄屏时保持可读性，左右列变成上下排列（但仍比原来好） */
+        @media (max-width: 860px) {
+            .game-area {
+                flex-direction: column;
+            }
+            .text-list, .image-grid {
+                max-height: none;
+            }
+            .team-card {
+                min-width: 280px;
+            }
+            .img-emoji {
+                font-size: 1.8rem;
+            }
+            .btn {
+                font-size: 1rem;
+                padding: 6px 18px;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* 对于超高分辨率或笔记本，确保不出现全局滚动条（内容刚好在视口内） */
+        @media (min-height: 700px) {
+            .game-container {
+                padding: 0.6rem 1rem 0.8rem;
+            }
+            .text-item {
+                padding: 5px 8px;
+                font-size: 0.8rem;
+            }
+            .img-card {
+                padding: 5px 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>⚔️ 君臣对弈 · 双人PK ⚔️</h1>
+    <div class="sub">📜 左右并排布局 | 点击图片 + 点击文字配对 | 快准者胜</div>
+
+    <div class="pk-row">
+        <!-- A组 左侧 -->
+        <div class="team-card" id="teamA">
+            <div class="team-header">
+                <div class="team-name">🔥 甲 组</div>
+                <div class="team-stats">
+                    <div class="timer-box">⏱️ <span id="timerA">0.00</span> s</div>
+                    <div class="score-box">🏆 <span id="scoreA">0</span> / <span id="totalA">8</span></div>
+                </div>
+            </div>
+            <div class="game-area">
+                <div class="text-list" id="textListA"></div>
+                <div class="image-grid" id="imageGridA"></div>
+            </div>
+        </div>
+
+        <!-- B组 右侧 -->
+        <div class="team-card" id="teamB">
+            <div class="team-header">
+                <div class="team-name">❄️ 乙 组</div>
+                <div class="team-stats">
+                    <div class="timer-box">⏱️ <span id="timerB">0.00</span> s</div>
+                    <div class="score-box">🏆 <span id="scoreB">0</span> / <span id="totalB">8</span></div>
+                </div>
+            </div>
+            <div class="game-area">
+                <div class="text-list" id="textListB"></div>
+                <div class="image-grid" id="imageGridB"></div>
+            </div>
+        </div>
+    </div>
+    <div id="countdownDisplay" style="text-align: center; font-size: 2.2rem; font-weight: bold; color: #ffd966; margin: 5px 0; text-shadow: 2px 2px 0 #5a2e1a;"></div>
+    <div class="control-bar">
+        <button class="btn" id="resetGameBtn">🔄 重置</button>
+        <button class="btn" id="startGameBtn">🎮 开始游戏</button>
+    </div>
+    <footer>✨ 配对规则：点击任意图片，再点击任意朝代文字（顺序可互换）| 独立计时，先配完8组者获胜 ✨</footer>
+</div>
+
+<script>
+    // ---------- 游戏原始数据 (朝代+制度) ----------
+    const DYNASTY_DATA = [
+        { id: 0, dynasty: "秦", system: "三公九卿制", key: "qin_sanjiu" },
+        { id: 1, dynasty: "西汉", system: "（汉武帝）“中外朝”制", key: "xi_han_zhongwai" },
+        { id: 2, dynasty: "东汉", system: "尚书台确立为新的行政中枢", key: "dong_han_shangshu" },
+        { id: 3, dynasty: "隋唐", system: "三省六部制", key: "sui_tang_sansheng" },
+        { id: 4, dynasty: "宋", system: "二府三司制", key: "song_erfu" },
+        { id: 5, dynasty: "元", system: "中书省", key: "yuan_zhongshu" },
+        { id: 6, dynasty: "明", system: "废丞相，设内阁", key: "ming_neige" },
+        { id: 7, dynasty: "清", system: "（雍正）军机处", key: "qing_junji" }
+    ];
+
+    // 图片数据构建 (美观emoji + 制度简称)
+    function buildImageItem(data) {
+        let emoji = "🏛️";
+        if (data.dynasty === "秦") emoji = "⚔️🗡️";
+        else if (data.dynasty === "西汉") emoji = "👑📜";
+        else if (data.dynasty === "东汉") emoji = "📖⚙️";
+        else if (data.dynasty === "隋唐") emoji = "🏯📜";
+        else if (data.dynasty === "宋") emoji = "🎋🏛️";
+        else if (data.dynasty === "元") emoji = "🐎📃";
+        else if (data.dynasty === "明") emoji = "🏮⚖️";
+        else if (data.dynasty === "清") emoji = "🐉🔱";
+        let shortSystem = data.system.length > 10 ? data.system.slice(0, 8) + "…" : data.system;
+        return {
+            key: data.key,
+            displaySystem: shortSystem,
+            dynasty: data.dynasty,
+            emoji: emoji,
+            fullSystem: data.system
+        };
+    }
+
+    const originalImagePool = DYNASTY_DATA.map(d => buildImageItem(d));
+
+    // ---------- 游戏管理类 (每组独立) ----------
+    class TeamGame {
+        constructor(teamId, containerTextId, containerImgId, timerSpanId, scoreSpanId, totalSpanId) {
+            this.teamId = teamId;
+            this.textContainer = document.getElementById(containerTextId);
+            this.imgContainer = document.getElementById(containerImgId);
+            this.timerSpan = document.getElementById(timerSpanId);
+            this.scoreSpan = document.getElementById(scoreSpanId);
+            this.totalSpan = document.getElementById(totalSpanId);
+            
+            this.textItems = [];
+            this.imageItems = [];
+            this.matchedCount = 0;
+            this.totalPairs = DYNASTY_DATA.length;
+            this.selectedElement = null;
+            this.selectedType = null;
+            this.selectedKey = null;
+            this.gameActive = false;
+            this.completed = false;
+            this.startTime = null;
+            this.timerInterval = null;
+            this.currentTime = 0;
+
+            this.scoreSpan.innerText = "0";
+            this.totalSpan.innerText = this.totalPairs;
+            
+            this.textKeyMap = new Map();
+            this.imageKeyMap = new Map();
+        }
+
+        // 初始化界面 (重置状态，打乱图片顺序，文字正序)  — 修复gameActive阻断渲染
+        initUI() {
+            this.textContainer.innerHTML = '';
+            this.imgContainer.innerHTML = '';
+            this.textItems = [];
+            this.imageItems = [];
+            this.textKeyMap.clear();
+            this.imageKeyMap.clear();
+            this.matchedCount = 0;
+            this.updateScoreDisplay();
+            this.clearSelected();
+            this.completed = false;
+            if (this.timerInterval) clearInterval(this.timerInterval);
+            this.startTime = null;
+            this.currentTime = 0;
+            this.timerSpan.innerText = "0.00";
+            
+            // 1. 文字列表（正序）
+            DYNASTY_DATA.forEach(data => {
+                const textDiv = document.createElement('div');
+                textDiv.className = 'text-item';
+                textDiv.setAttribute('data-key', data.key);
+                textDiv.setAttribute('data-type', 'text');
+                textDiv.innerHTML = `<strong>${data.dynasty}：</strong>${data.system}`;
+                this.textContainer.appendChild(textDiv);
+                this.textItems.push(textDiv);
+                this.textKeyMap.set(data.key, textDiv);
+                textDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!this.gameActive || this.completed) return;
+                    this.handleTextClick(textDiv, data.key);
+                });
+            });
+            
+            // 2. 图片列表（打乱顺序）
+            const shuffledImages = [...originalImagePool];
+            for (let i = shuffledImages.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]];
+            }
+            
+            shuffledImages.forEach(imgData => {
+                const imgCard = document.createElement('div');
+                imgCard.className = 'img-card';
+                imgCard.setAttribute('data-key', imgData.key);
+                imgCard.setAttribute('data-type', 'image');
+                imgCard.innerHTML = `
+                    <div class="img-emoji">${imgData.emoji}</div>
+                    <div class="img-label">${imgData.displaySystem}</div>
+                `;
+                this.imgContainer.appendChild(imgCard);
+                this.imageItems.push(imgCard);
+                this.imageKeyMap.set(imgData.key, imgCard);
+                imgCard.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!this.gameActive || this.completed) return;
+                    this.handleImageClick(imgCard, imgData.key);
+                });
+            });
+        }
+        
+        // 图片点击处理（双向：如果已经选中文字则配对，否则选中图片）
+        handleImageClick(imgDom, key) {
+            if (imgDom.classList.contains('matched')) return;
+            // 若已有选中且选中类型为文字 → 配对
+            if (this.selectedElement && this.selectedType === 'text' && !this.selectedElement.classList.contains('matched')) {
+                const textKey = this.selectedKey;
+                const textDom = this.selectedElement;
+                this.attemptMatch(key, textKey, imgDom, textDom);
+                return;
+            }
+            // 否则清除已有选中，然后选中当前图片
+            this.clearSelected();
+            imgDom.classList.add('selected');
+            this.selectedElement = imgDom;
+            this.selectedType = 'image';
+            this.selectedKey = key;
+        }
+        
+        // 文字点击处理（如果已选中图片则配对，否则选中文字）
+        handleTextClick(textDom, key) {
+            if (textDom.classList.contains('matched')) return;
+            if (this.selectedElement && this.selectedType === 'image' && !this.selectedElement.classList.contains('matched')) {
+                const imageKey = this.selectedKey;
+                const imgDom = this.selectedElement;
+                this.attemptMatch(imageKey, key, imgDom, textDom);
+                return;
+            }
+            this.clearSelected();
+            textDom.classList.add('selected');
+            this.selectedElement = textDom;
+            this.selectedType = 'text';
+            this.selectedKey = key;
+        }
+        
+        // 配对验证
+        attemptMatch(imageKey, textKey, imgDom, textDom) {
+            if (!this.gameActive || this.completed) {
+                this.clearSelected();
+                return;
+            }
+            if (imgDom.classList.contains('matched') || textDom.classList.contains('matched')) {
+                this.showErrorMsg("❌ 这张牌已经配对过了！");
+                this.clearSelected();
+                return;
+            }
+            
+            if (imageKey === textKey) {
+                this.matchSuccess(imgDom, textDom);
+            } else {
+                this.showErrorMsg(`❌ 配对错误！ “${textDom.innerText}” 不匹配当前图片`);
+                this.clearSelected();
+            }
+        }
+        
+        matchSuccess(imgDom, textDom) {
+            imgDom.classList.add('matched');
+            textDom.classList.add('matched');
+            this.matchedCount++;
+            this.updateScoreDisplay();
+            this.clearSelected();
+            
+            if (this.matchedCount === this.totalPairs && !this.completed) {
+                this.completed = true;
+                this.gameActive = false;
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                const finalTime = this.currentTime;
+                if (window.checkGameWinner) {
+                    window.checkGameWinner(this.teamId, finalTime);
+                }
+            }
+        }
+        
+        updateScoreDisplay() {
+            this.scoreSpan.innerText = this.matchedCount;
+        }
+        
+        clearSelected() {
+            if (this.selectedElement) {
+                this.selectedElement.classList.remove('selected');
+                this.selectedElement = null;
+            }
+            this.selectedType = null;
+            this.selectedKey = null;
+        }
+        
+        showErrorMsg(msg) {
+            if (window.showGlobalTip) window.showGlobalTip(msg);
+        }
+        
+        // 开始计时 + 激活游戏
+        startGame() {
+            if (this.completed) return;
+            this.gameActive = true;
+            if (this.startTime !== null) return;
+            this.startTime = performance.now();
+            this.timerInterval = setInterval(() => {
+                if (!this.gameActive && !this.completed) return;
+                if (this.completed) return;
+                const now = performance.now();
+                this.currentTime = (now - this.startTime) / 1000;
+                this.timerSpan.innerText = this.currentTime.toFixed(2);
+            }, 100);
+        }
+        
+        stopAndResetTimer() {
+            if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+            }
+            this.startTime = null;
+            this.currentTime = 0;
+            this.gameActive = false;
+            this.completed = false;
+            this.matchedCount = 0;
+            this.updateScoreDisplay();
+            this.timerSpan.innerText = "0.00";
+            this.clearSelected();
+        }
+        
+        fullReset() {
+            this.stopAndResetTimer();
+            this.gameActive = false;
+            this.completed = false;
+            this.matchedCount = 0;
+            this.updateScoreDisplay();
+            this.initUI();      // 重新绘制（文字正序，图片打乱）
+            this.clearSelected();
+        }
+        
+        activate() {
+            if (this.completed) return;
+            this.gameActive = true;
+            if (!this.startTime && !this.completed) {
+                this.startTime = performance.now();
+                this.startGame();
+            }
+        }
+        
+        deactivate() {
+            this.gameActive = false;
+            if (this.timerInterval) clearInterval(this.timerInterval);
+        }
+    }
+    
+    // ---------- 全局双人PK控制器 ----------
+    let teamAGame, teamBGame;
+    let gameWinnerDeclared = false;
+    let globalGameStarted = false;
+    let countdownActive = false;      // 防止重复倒计时
+    let countdownInterval = null;     // 倒计时定时器
+    
+    function showGlobalTip(msg) {
+        let toast = document.querySelector('.error-msg');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'error-msg';
+            document.body.appendChild(toast);
+        }
+        toast.innerText = msg;
+        toast.style.opacity = '1';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 1200);
+    }
+    window.showGlobalTip = showGlobalTip;
+    
+    function checkGameWinner(winnerTeamId, finalTime) {
+        if (gameWinnerDeclared) return;
+        gameWinnerDeclared = true;
+        teamAGame.deactivate();
+        teamBGame.deactivate();
+        
+        const winnerName = winnerTeamId === 'A' ? '🔥 甲组' : '❄️ 乙组';
+        const winDiv = document.createElement('div');
+        winDiv.className = 'winner-toast';
+        winDiv.innerText = `🎉 ${winnerName} 获胜！ 🎉`;
+        document.body.appendChild(winDiv);
+        setTimeout(() => {
+            winDiv.style.opacity = '0';
+            setTimeout(() => winDiv.remove(), 1000);
+        }, 2500);
+        setTimeout(() => {
+            alert(`🏆 胜利！ ${winnerName} 完成全部配对！ 🏆\n⏱️ 用时 ${finalTime.toFixed(2)} 秒，正确率100%！`);
+        }, 50);
+    }
+    window.checkGameWinner = checkGameWinner;
+    
+    function resetFullGame() {
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownActive = false;
+        gameWinnerDeclared = false;
+        globalGameStarted = false;
+
+        teamAGame.fullReset();
+        teamBGame.fullReset();
+
+        const countdownDiv = document.getElementById('countdownDisplay');
+        if (countdownDiv) countdownDiv.innerText = '';
+    }   
+
+        function startCountdown() {
+        if (countdownActive || gameWinnerDeclared) return;
+
+        // 确保双方完全重置且未激活
+        teamAGame.deactivate();
+        teamBGame.deactivate();
+        teamAGame.stopAndResetTimer();   // 计时显示归零
+        teamBGame.stopAndResetTimer();
+
+        let count = 3;
+        const countdownDiv = document.getElementById('countdownDisplay');
+        if (countdownDiv) countdownDiv.innerText = count;
+
+        countdownActive = true;
+        countdownInterval = setInterval(() => {
+            count--;
+            if (countdownDiv) {
+                countdownDiv.innerText = count > 0 ? count : "GO!";
+            }
+                        if (count <= 0) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                countdownActive = false;
+                if (countdownDiv) countdownDiv.innerText = "";
+                // 启动双方的秒表（同时允许配对）
+                teamAGame.startGame();   // 这会设置 gameActive=true 并启动计时器
+                teamBGame.startGame();
+                globalGameStarted = true;
+                showGlobalTip("⚔️ 对战开始！快配对吧！");
+            }
+        }, 1000);
+    }
+    
+    function startMatch() {
+        if (globalGameStarted) return;
+        globalGameStarted = true;
+        gameWinnerDeclared = false;
+        teamAGame.activate();
+        teamBGame.activate();
+    }
+    
+    function init() {
+        teamAGame = new TeamGame('A', 'textListA', 'imageGridA', 'timerA', 'scoreA', 'totalA');
+        teamBGame = new TeamGame('B', 'textListB', 'imageGridB', 'timerB', 'scoreB', 'totalB');
+        
+        // 初始化界面（此时不会因为gameActive而阻止渲染）
+        teamAGame.fullReset();
+        teamBGame.fullReset();
+        teamAGame.deactivate();
+        teamBGame.deactivate();
+        
+        const resetBtn = document.getElementById('resetGameBtn');
+        resetBtn.addEventListener('click', () => {
+            resetFullGame();
+            showGlobalTip("✨ 新对局！双方开始配对，先完成所有配对者获胜 ✨");
+        });
+        
+        const startBtn = document.getElementById('startGameBtn');
+        startBtn.addEventListener('click', () => {
+            if (gameWinnerDeclared) {
+                showGlobalTip("比赛已结束，请先按「开局/重置」");
+                return;
+            }
+            if (countdownActive) {
+                showGlobalTip("倒计时进行中，请稍后...");
+                return;
+            }
+            if (teamAGame.matchedCount > 0 || teamBGame.matchedCount > 0) {
+                showGlobalTip("请先按「开局/重置」清理上局记录");
+                return;
+            }
+            startCountdown();
+        });
+
+    }
+    
+    init();
+</script>
+</body>
+</html>
