@@ -207,7 +207,8 @@
             padding: 0.7rem;
             box-shadow: inset 0 0 0 2px #fff1d0, 0 4px 8px rgba(0,0,0,0.05);
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            /* grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); */
+            grid-template-columns: repeat(2, 1fr);
             gap: 10px;
             align-content: start;
         }
@@ -418,22 +419,26 @@
 
     // 图片数据构建 (美观emoji + 制度简称)
     function buildImageItem(data) {
-        let emoji = "🏛️";
-        if (data.dynasty === "秦") emoji = "⚔️🗡️";
-        else if (data.dynasty === "西汉") emoji = "👑📜";
-        else if (data.dynasty === "东汉") emoji = "📖⚙️";
-        else if (data.dynasty === "隋唐") emoji = "🏯📜";
-        else if (data.dynasty === "宋") emoji = "🎋🏛️";
-        else if (data.dynasty === "元") emoji = "🐎📃";
-        else if (data.dynasty === "明") emoji = "🏮⚖️";
-        else if (data.dynasty === "清") emoji = "🐉🔱";
+        let emoji = "🏛️";  // 这个字段可以不再使用，但保留也无妨
+        // 根据朝代设置图片路径（请将路径换成你自己的图片）
+        let imageUrl = "";
+        if (data.dynasty === "秦") imageUrl = "images/qin.png";
+        else if (data.dynasty === "西汉") imageUrl = "images/xihan.png";
+        else if (data.dynasty === "东汉") imageUrl = "images/donghan.png";
+        else if (data.dynasty === "隋唐") imageUrl = "images/suitang.png";
+        else if (data.dynasty === "宋") imageUrl = "images/song.png";
+        else if (data.dynasty === "元") imageUrl = "images/yuan.png";
+        else if (data.dynasty === "明") imageUrl = "images/ming.png";
+        else if (data.dynasty === "清") imageUrl = "images/qing.png";
+
         let shortSystem = data.system.length > 10 ? data.system.slice(0, 8) + "…" : data.system;
         return {
             key: data.key,
-            displaySystem: shortSystem,
+            displaySystem: shortSystem,   // 保留但不再显示
             dynasty: data.dynasty,
-            emoji: emoji,
-            fullSystem: data.system
+            emoji: emoji,                 // 不再使用
+            fullSystem: data.system,
+            imageUrl: imageUrl            // 新增图片路径
         };
     }
 
@@ -515,10 +520,13 @@
                 imgCard.className = 'img-card';
                 imgCard.setAttribute('data-key', imgData.key);
                 imgCard.setAttribute('data-type', 'image');
-                imgCard.innerHTML = `
-                    <div class="img-emoji">${imgData.emoji}</div>
-                    <div class="img-label">${imgData.displaySystem}</div>
-                `;
+                 //  <div class="img-label">${imgData.displaySystem}</div>
+            imgCard.innerHTML = `
+                <div class="img-emoji">
+                    <img src="${imgData.imageUrl}" alt="${imgData.dynasty}" style="width: 100px; height: auto; border-radius: 12px; display: block; margin: 0 auto;">
+                </div>
+            `;
+        // 不再显示 .img-label，纯图片配对
                 this.imgContainer.appendChild(imgCard);
                 this.imageItems.push(imgCard);
                 this.imageKeyMap.set(imgData.key, imgCard);
